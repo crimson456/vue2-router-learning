@@ -45,6 +45,9 @@ export default {
   render (h: Function) {
     const router = this.$router
     const current = this.$route
+    // location对象，包含解析后的path、query、hash
+    // route为新创建的路由
+    // href完整的链接地址
     const { location, route, href } = router.resolve(
       this.to,
       current,
@@ -52,26 +55,21 @@ export default {
     )
 
     const classes = {}
+    // router-link标签活跃状态时的普通、精确类名
     const globalActiveClass = router.options.linkActiveClass
     const globalExactActiveClass = router.options.linkExactActiveClass
     // Support global empty active class
-    const activeClassFallback =
-      globalActiveClass == null ? 'router-link-active' : globalActiveClass
-    const exactActiveClassFallback =
-      globalExactActiveClass == null
-        ? 'router-link-exact-active'
-        : globalExactActiveClass
-    const activeClass =
-      this.activeClass == null ? activeClassFallback : this.activeClass
-    const exactActiveClass =
-      this.exactActiveClass == null
-        ? exactActiveClassFallback
-        : this.exactActiveClass
+    const activeClassFallback = globalActiveClass == null ? 'router-link-active' : globalActiveClass
+    const exactActiveClassFallback = globalExactActiveClass == null ? 'router-link-exact-active' : globalExactActiveClass
+    const activeClass = this.activeClass == null ? activeClassFallback : this.activeClass
+    const exactActiveClass = this.exactActiveClass == null ? exactActiveClassFallback : this.exactActiveClass
 
     const compareTarget = route.redirectedFrom
       ? createRoute(null, normalizeLocation(route.redirectedFrom), null, router)
       : route
-
+    
+    // class对象下添加对应类名的成员，成员值为布尔值，用于挂载在data.class下
+    // 此处将判断如果对应路由是激活状态将设置的类名的成员置为true
     classes[exactActiveClass] = isSameRoute(current, compareTarget, this.exactPath)
     classes[activeClass] = this.exact || this.exactPath
       ? classes[exactActiveClass]
@@ -80,7 +78,9 @@ export default {
     const ariaCurrentValue = classes[exactActiveClass] ? this.ariaCurrentValue : null
 
     const handler = e => {
+      // guardEvent函数的目的是处理：事件触发不能附带控制键，不能使用右键等等，且阻止默认行为
       if (guardEvent(e)) {
+        // 根据replace字段选择跳转还是替换
         if (this.replace) {
           router.replace(location, noop)
         } else {
@@ -89,7 +89,10 @@ export default {
       }
     }
 
+    // 这样写后面不是覆盖了吗，而且click事件一直存在
+    // click点击事件不能附带控制键，不能使用右键等等，且阻止默认行为
     const on = { click: guardEvent }
+
     if (Array.isArray(this.event)) {
       this.event.forEach(e => {
         on[e] = handler
@@ -100,6 +103,7 @@ export default {
 
     const data: any = { class: classes }
 
+    // 处理新语法v-slot作用域插槽
     const scopedSlot =
       !this.$scopedSlots.$hasNormal &&
       this.$scopedSlots.default &&
@@ -110,7 +114,6 @@ export default {
         isActive: classes[activeClass],
         isExactActive: classes[exactActiveClass]
       })
-
     if (scopedSlot) {
       if (process.env.NODE_ENV !== 'production' && !this.custom) {
         !warnedCustomSlot && warn(false, 'In Vue Router 4, the v-slot API will by default wrap its content with an <a> element. Use the custom prop to remove this warning:\n<router-link v-slot="{ navigate, href }" custom></router-link>\n')
@@ -148,11 +151,15 @@ export default {
       }
     }
 
+    // <a>标签直接将事件和属性绑定在标签上
     if (this.tag === 'a') {
       data.on = on
       data.attrs = { href, 'aria-current': ariaCurrentValue }
-    } else {
+    } 
+    // 其他标签
+    else {
       // find the first <a> child and apply listener and href
+      // 找到第一个子<a>标签，将事件和属性绑定在此标签上
       const a = findAnchor(this.$slots.default)
       if (a) {
         // in case the <a> is a static node
@@ -179,12 +186,14 @@ export default {
         const aAttrs = (a.data.attrs = extend({}, a.data.attrs))
         aAttrs.href = href
         aAttrs['aria-current'] = ariaCurrentValue
-      } else {
+      } 
+      // 没有子<a>标签，只绑定事件，不绑定href属性和aria-current属性
+      else {
         // doesn't have <a> child, apply listener to self
         data.on = on
       }
     }
-
+    // 根据标签创建节点
     return h(this.tag, data, this.$slots.default)
   }
 }

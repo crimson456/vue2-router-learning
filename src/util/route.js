@@ -5,6 +5,7 @@ import { stringifyQuery } from './query'
 
 const trailingSlashRE = /\/?$/
 
+// 通过路由记录创建路由对象
 export function createRoute (
   record: ?RouteRecord,
   location: Location,
@@ -34,6 +35,7 @@ export function createRoute (
   return Object.freeze(route)
 }
 
+// 深复制
 function clone (value) {
   if (Array.isArray(value)) {
     return value.map(clone)
@@ -49,10 +51,12 @@ function clone (value) {
 }
 
 // the starting route that represents the initial state
+// 初始路由
 export const START = createRoute(null, {
   path: '/'
 })
 
+// 递归获取所有父路径上的路有记录
 function formatMatch (record: ?RouteRecord): Array<RouteRecord> {
   const res = []
   while (record) {
@@ -62,6 +66,7 @@ function formatMatch (record: ?RouteRecord): Array<RouteRecord> {
   return res
 }
 
+// 获取完整路径，包括query参数和hash值
 function getFullPath (
   { path, query = {}, hash = '' },
   _stringifyQuery
@@ -70,16 +75,24 @@ function getFullPath (
   return (path || '/') + stringify(query) + hash
 }
 
+// 对比是否为相同的路由
 export function isSameRoute (a: Route, b: ?Route, onlyPath: ?boolean): boolean {
+  // b为起始路由
   if (b === START) {
     return a === b
-  } else if (!b) {
+  } 
+  // b不存在
+  else if (!b) {
     return false
-  } else if (a.path && b.path) {
+  } 
+  // a，b路径都存在，比较路径，query参数，hash值是否相同
+  else if (a.path && b.path) {
     return a.path.replace(trailingSlashRE, '') === b.path.replace(trailingSlashRE, '') && (onlyPath ||
       a.hash === b.hash &&
       isObjectEqual(a.query, b.query))
-  } else if (a.name && b.name) {
+  } 
+  // a，b命名都存在，比较命名，query参数，hash值，params参数是否相同
+  else if (a.name && b.name) {
     return (
       a.name === b.name &&
       (onlyPath || (
@@ -88,11 +101,14 @@ export function isSameRoute (a: Route, b: ?Route, onlyPath: ?boolean): boolean {
       isObjectEqual(a.params, b.params))
       )
     )
-  } else {
+  } 
+  // 其他情况不为相同路由
+  else {
     return false
   }
 }
 
+// 递归深层对比是否为相同对象
 function isObjectEqual (a = {}, b = {}): boolean {
   // handle null value #1566
   if (!a || !b) return a === b
@@ -116,6 +132,7 @@ function isObjectEqual (a = {}, b = {}): boolean {
   })
 }
 
+// 判断第二个参数的路由是否包含在第一个路由中
 export function isIncludedRoute (current: Route, target: Route): boolean {
   return (
     current.path.replace(trailingSlashRE, '/').indexOf(
@@ -126,6 +143,7 @@ export function isIncludedRoute (current: Route, target: Route): boolean {
   )
 }
 
+// 判断第二个参数的query参数是否包含在第一个参数中
 function queryIncludes (current: Dictionary<string>, target: Dictionary<string>): boolean {
   for (const key in target) {
     if (!(key in current)) {
@@ -135,6 +153,9 @@ function queryIncludes (current: Dictionary<string>, target: Dictionary<string>)
   return true
 }
 
+
+// 调用路由中所有的enteredCbs，以实例作为形参
+// enteredCbs一般为beforeRouteEnter守卫函数中next(somefunction)中传入的路由完成后执行的函数
 export function handleRouteEntered (route: Route) {
   for (let i = 0; i < route.matched.length; i++) {
     const record = route.matched[i]

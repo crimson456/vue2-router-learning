@@ -8,6 +8,11 @@ const regexpCompileCache: {
   [key: string]: Function
 } = Object.create(null)
 
+// fillParams(record.path, location.params, `named route "${name}"`)
+// 向路径中填入params参数
+// .eg    /user/:id   +   {id:123}   --->   /user/123
+// fillParams可以看做是matchRoute的逆操作
+// ???具体实现还没细看
 export function fillParams (
   path: string,
   params: ?Object,
